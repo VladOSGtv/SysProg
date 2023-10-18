@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <dirent.h>
 #include <string.h>
@@ -56,7 +57,7 @@ int scan_dir(char* path, char* PIBN)
             return 1;
         } 
     while((entry = readdir(dir)) != NULL)
-        if(entry->d_type == "DT_DIR") 
+        if(entry->d_type == DT_DIR) 
         {
             if(strcmp(entry->d_name, ".") || strcmp(entry->d_name, ".."))
             if((buffer = (char*)malloc((strlen(path) + strlen(entry->d_name) + 1)* sizeof(char)+1 )) == NULL)
@@ -70,7 +71,7 @@ int scan_dir(char* path, char* PIBN)
                 scan_dir(buffer, PIBN);
                 free(buffer);
         }
-        else if(entry->d_type == "DT_REG")
+        else if(entry->d_type == DT_REG)
         {
             if((fr = open(entry->d_name, O_RDONLY)) == -1)    //перевірка відкриття файлу для читання
                 printf("Cannot open input file %s\n", entry->d_name);
