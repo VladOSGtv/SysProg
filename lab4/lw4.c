@@ -7,15 +7,16 @@
 #include <unistd.h>
 
 int scan_dir(char*, char*);
-void scan_file(struct dirent *entry);
 
 int main(int argc, char **argv)
 {
-    if(argc < 2)                //перевірка на кіль-ть аргументів
-    {                           //3 аргумент - ім'я директорії - опціонально
-        printf("Too few arguments\n");
-        return 1;
-    }
+    argv[1] = "PIBN.txt";
+    argv[2] = ".";
+    // if(argc < 2)                //перевірка на кіль-ть аргументів
+    // {                           //3 аргумент - ім'я директорії - опціонально
+    //     printf("Too few arguments\n");
+    //     return 1;
+    // }
 
     char *path = ".";
 
@@ -34,8 +35,8 @@ int main(int argc, char **argv)
     lseek(fr, 0, SEEK_SET); //повертаюсь на початок файлу
     char* PIBN = malloc(bytes);
     read(fr, PIBN, bytes);
-
     close(fr);
+
     if(argc > 2)
         path = argv[2];
     scan_dir(path, PIBN);
@@ -53,7 +54,7 @@ int scan_dir(char* path, char* PIBN)
     char *buffer;
     if((dir = opendir(path)) == NULL)
         {
-            fprintf("Error opening directory %s", path);
+            printf("Error opening directory %s", path);
             return 1;
         } 
     while((entry = readdir(dir)) != NULL)
@@ -65,7 +66,7 @@ int scan_dir(char* path, char* PIBN)
                     printf("Unable allocate a memory \n");
                     return 1;
                 }
-                strcopy(buffer, path);
+                strcpy(buffer, path);
                 strcat(buffer, "/");
                 strcat(buffer, entry->d_name);
                 scan_dir(buffer, PIBN);
@@ -77,7 +78,8 @@ int scan_dir(char* path, char* PIBN)
                 printf("Cannot open input file %s\n", entry->d_name);
             if((file_size = lseek(fr, 0, SEEK_END)) == -1)      //перевірка 
                 printf("Error procesing %s\n", entry->d_name);
-            while(ftell(fr) < file_size - strlen(PIBN))
+            //while(ftell(fr) < file_size - strlen(PIBN))
+                for(int i = 0; i < entry->d_reclen / sizeof(char) - strlen(PIBN); i++){
                 if(fgetc(fr) == PIBN[0])
                 { 
                     int i = 1;
@@ -87,6 +89,7 @@ int scan_dir(char* path, char* PIBN)
                         fprintf(" PIBN founded in file %s", entry->d_name);
                     else
                         lseek(fr, -i, SEEK_CUR);
+                }
                 }
         }
     
