@@ -10,13 +10,12 @@ int scan_dir(char*, char*);
 
 int main(int argc, char **argv)
 {
-    argv[1] = "PIBN.txt";
-    argv[2] = ".";
-    // if(argc < 2)                //перевірка на кіль-ть аргументів
-    // {                           //3 аргумент - ім'я директорії - опціонально
-    //     printf("Too few arguments\n");
-    //     return 1;
-    // }
+    
+    if(argc < 2)                //перевірка на кіль-ть аргументів
+    {                           //3 аргумент - ім'я директорії - опціонально
+        printf("Too few arguments\n");
+        return 1;
+    }
 
     char *path = ".";
 
@@ -74,7 +73,10 @@ int scan_dir(char* path, char* PIBN)
         }
         else if(entry->d_type == DT_REG)
         {
-            if((fr = open(entry->d_name, O_RDONLY)) == -1)    //перевірка відкриття файлу для читання
+            //if((fr = open(entry->d_name, O_RDONLY)) == -1)    //перевірка відкриття файлу для читання
+            char fullPath[PATH_MAX];
+            snprintf(fullPath, PATH_MAX, "&s&s", path, entry->d_name);
+            if((fr = open(fullPath, O_RDONLY)) == -1)    //перевірка відкриття файлу для читання
                 printf("Cannot open input file %s\n", entry->d_name);
             if((file_size = lseek(fr, 0, SEEK_END)) == -1)      //перевірка 
                 printf("Error procesing %s\n", entry->d_name);
@@ -86,11 +88,13 @@ int scan_dir(char* path, char* PIBN)
                     while(fgetc(fr) == PIBN[i])
                         i++;
                     if (i == strlen(PIBN))
-                        fprintf(" PIBN founded in file %s", entry->d_name);
+                        printf(" PIBN founded in file %s", entry->d_name);
                     else
                         lseek(fr, -i, SEEK_CUR);
                 }
                 }
+            close(fullPath);
+            
         }
     
 
