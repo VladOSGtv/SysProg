@@ -9,6 +9,7 @@
 #define BUF_SIZE 4096       //розмір буферу
 
 int scan_dir(char*, char*);
+int scanFile(char* path, char* sign);
 
 int main(int argc, char **argv)
 {
@@ -33,7 +34,7 @@ int main(int argc, char **argv)
             printf("Error procesing %s\n", argv[1]);
             return 1;
         }
-    printf("bytes = %ld", bytes);
+    printf("bytes = %ld \n", bytes);
     lseek(fr, 0, SEEK_SET); //повертаюсь на початок файлу
     char* PIBN = malloc(bytes + 1);
     read(fr, PIBN, bytes);
@@ -52,10 +53,8 @@ int main(int argc, char **argv)
 int scan_dir(char* path, char* PIBN)
 {
     DIR *dir;
-    int fr, file_size;
     struct dirent *entry;
     char *buffer = NULL;
-    char readBuffer[BUF_SIZE];
     if((dir = opendir(path)) == NULL)
         {
             printf("Error opening directory %s", path);
@@ -85,7 +84,6 @@ int scan_dir(char* path, char* PIBN)
         }
         else if(entry->d_type == DT_REG)
         {
-         
             printf(" File %s is founded here \n", entry->d_name);   
             if((buffer = (char*)malloc((strlen(path) + strlen(entry->d_name) + 1)* sizeof(char)+1 )) == NULL)
                 {
@@ -95,77 +93,70 @@ int scan_dir(char* path, char* PIBN)
             strcpy(buffer, path);
             strcat(buffer, "/");
             strcat(buffer, entry->d_name);
-            if((fr = open(buffer, O_RDONLY)) == -1){    //перевірка відкриття файлу для читання
-                printf("Cannot open input file %s at %s \n", entry->d_name, buffer);
-                return 1;
-            }
-            free(buffer);
+            scanFile(buffer, PIBN);
 
-            if((file_size = lseek(fr, 0, SEEK_END)) == -1)
-            {      //перевірка 
-                printf("Error procesing %s\n", entry->d_name);
-                return 1;
-            }
-            int n = sizeof(PIBN) * 4;
-            int num = 0;
-            int bytes;
-            for (bytes = read(fr, readBuffer, BUF_SIZE); bytes > n;)//читання файлу
-            {
-                for (int i = 0; i < bytes; i++)                 //перебір буферу
-                {
-                    if(readBuffer[i] == PIBN[num]){
-                        if(bytes >= i + n){ 
-                            int j = 1;
-                            for (; j < n - num; j++)                            
-                                if(readBuffer[j + i] != PIBN[j + num]){
-                                num = 0;
-                                break;
-                                }
-                            if(j == n - 1 - num)
-                            printf(" PIBN found in %s", entry->d_name);
-                        }
-                        else 
-                        { 
-                            int j = 0;
-                            for (; j < bytes - (i + n - 1); j++)
-                                if(readBuffer[j + i] != PIBN[j]) break;
-                            if(j == bytes - (i + n - 1) - 1)
-                                num = j;
-                        }   
-                    }
-                }                                   
-            }            
-        close(fr);    
+            free(buffer);
+            
         }
     closedir(dir);
     return 0;
 }
 
+int scanFile(char *path, char *sign)
+{
+    char readBuffer[BUF_SIZE];
+    int fr, file_size;
 
+    if ((fr = open(path, O_RDONLY)) == -1)
+    { // перевірка відкриття файлу для читання
+        printf("Cannot open input file %s \n", path);
+        return 1;
+    }
 
+    if ((file_size = lseek(fr, 0, SEEK_END)) == -1)
+    { // перевірка
+        printf("Error procesing %s\n", path);
+        return 1;
+    }
+    int n = sizeof(sign) * 4;
+    int num = 0;
+    int bytes;
+    lseek(fr, 0, SEEK_SET);
+    for (bytes = read(fr, readBuffer, BUF_SIZE); bytes > n;) // читання файлу
+    {
+        for (int i = 0; i < bytes; i++) // перебір буферу
+        {
+            if (readBuffer[i] == sign[num])
+            {
+                if (bytes >= i + n)
+                {
+                    int j = 1;
+                    for (; j < n - num; j++)
+                        if (readBuffer[j + i] != sign[j + num])
+                        {
+                            num = 0;
+                            break;
+                        }
+                    if (j == n - num)
+                    {
+                        printf(" ****** PIBN found in %s \n", path);
+                        close(fr);
+                        return 0;
+                    }
+                }
+                else
+                {
+                    int j = 0;
+                    for (; j < bytes - (i + n - 1); j++)
+                        if (readBuffer[j + i] != sign[j])
+                            break;
+                    if (j == bytes - (i + n - 1))
+                        num = j;
+                }
+            }
+        }
+    }
 
-//free(buffer);
-            
-
-            // if((fr = open(entry->d_ino, O_RDONLY)) == -1){    //перевірка відкриття файлу для читання
-            // printf("Cannot open input file %s\n", entry->d_name);
-            //     return 1;}   
-            
-            // char fullPath[PATH_MAX];
-            // snprintf(fullPath, PATH_MAX, "%s/%s", path, entry->d_name);
-            // if((fr = open(fullPath, O_RDONLY)) == -1){    //перевірка відкриття файлу для читання
-                //printf("Cannot open input file %s at %s \n", entry->d_name, fullPath);
-                
-                //while(ftell(fr) < file_size - strlen(PIBN))
-            // for(int i = 0; i < entry->d_reclen / sizeof(char) - strlen(PIBN); i++){
-            //     if(fgetc(fr) == PIBN[0])
-            //     { 
-            //         int i = 1;
-            //         while(fgetc(fr) == PIBN[i])
-            //             i++;
-            //         if (i == strlen(PIBN))
-            //             printf(" PIBN founded in file %s", entry->d_name);
-            //         else
-            //             lseek(fr, -i, SEEK_CUR);
-            //     }
-            //     }
+    close(fr);
+    return 1;
+}
