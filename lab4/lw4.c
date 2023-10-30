@@ -95,12 +95,12 @@ int scan_dir(char* path, char* PIBN)
             strcpy(buffer, path);
             strcat(buffer, "/");
             strcat(buffer, entry->d_name);
-
             if((fr = open(buffer, O_RDONLY)) == -1){    //перевірка відкриття файлу для читання
                 printf("Cannot open input file %s at %s \n", entry->d_name, buffer);
                 return 1;
             }
-            
+            free(buffer);
+
             if((file_size = lseek(fr, 0, SEEK_END)) == -1)
             {      //перевірка 
                 printf("Error procesing %s\n", entry->d_name);
@@ -116,20 +116,20 @@ int scan_dir(char* path, char* PIBN)
                     if(readBuffer[i] == PIBN[num]){
                         if(bytes >= i + n){ 
                             int j = 1;
-                            for (; j < n; j++)                            
+                            for (; j < n - num; j++)                            
                                 if(readBuffer[j + i] != PIBN[j + num]){
                                 num = 0;
                                 break;
                                 }
-                            if(j = n - 1 - num)
-                            printf(" PIBN finded in %s", entry->d_name);
+                            if(j == n - 1 - num)
+                            printf(" PIBN found in %s", entry->d_name);
                         }
                         else 
                         { 
                             int j = 0;
                             for (; j < bytes - (i + n - 1); j++)
                                 if(readBuffer[j + i] != PIBN[j]) break;
-                            if(j = bytes - (i + n - 1) - 1)
+                            if(j == bytes - (i + n - 1) - 1)
                                 num = j;
                         }   
                     }
