@@ -7,13 +7,13 @@
 #include <string.h>
 
 
-void crfLowLevFunIO(char* fileName, size_t fileSize);
-void crfDefFunIO(char* fileName, size_t fileSize);
-void crfByMmap(char* fileName, size_t fileSize);
+int crfLowLevFunIO(char* fileName, size_t fileSize);
+int crfDefFunIO(char* fileName, size_t fileSize);
+int crfByMmap(char* fileName, size_t fileSize);
 
-void cpyfLowLevFunIO(char* fileName, size_t fileSize);
-void cpyDefFunIO(char* fileName, size_t fileSize);
-void cpyByMmap(char* fileName, size_t fileSize);
+int cpyfLowLevFunIO(char* fileName, size_t fileSize);
+int cpyDefFunIO(char* fileName, size_t fileSize);
+int cpyByMmap(char* fileName, size_t fileSize);
 
 int main(int argc, char** argv)
 {
@@ -23,66 +23,34 @@ int main(int argc, char** argv)
     }
 
     char* fileName = argv[1];
-    size_t fileSizeGB = atoi(argv[2]);
-    size_t fileSize = fileSizeGB * 1024 * 1024 * 1024;
-
-
+    size_t fileSize = atoi(argv[2]) * 1024 * 1024 * 1024;
 
 
   // Створення файлу
-    struct timeval start, end;
-    gettimeofday(&start, NULL);
     crfLowLevFunIO(fileName, fileSize);
-    gettimeofday(&end, NULL);
-    printf("Creating file with low-level I/O took %.6f seconds\n", getTimeElapsed(start, end));
-
- // Видалення файлу
     if (remove(fileName) == -1) 
         perror("Error deleting file");
 
-    gettimeofday(&start, NULL);
     crfDefFunIO(fileName, fileSize);
-    gettimeofday(&end, NULL);
-    printf("Creating file with standard file I/O took %.6f seconds\n", getTimeElapsed(start, end));
- 
- // Видалення файлу
     if (remove(fileName) == -1) 
         perror("Error deleting file");
         
-    gettimeofday(&start, NULL);
     crfByMmap(fileName, fileSize);
-    gettimeofday(&end, NULL);
-    printf("Creating file with mmap took %.6f seconds\n", getTimeElapsed(start, end));
 
 
     // Копіювання файлу
     char destFileName[256];
     snprintf(destFileName, sizeof(destFileName), "%s_copy", fileName);
 
-    gettimeofday(&start, NULL);
     cpyfLowLevFunIO(fileName, destFileName, fileSize);
-    gettimeofday(&end, NULL);
-    printf("Copying file with low-level I/O took %.6f seconds\n", getTimeElapsed(start, end));
-
- // Видалення файлу
     if (remove(destFileName) == -1) 
         perror("Error deleting file");
 
-    gettimeofday(&start, NULL);
     cpyDefFunIO(fileName, destFileName, fileSize);
-    gettimeofday(&end, NULL);
-    printf("Copying file with standard file I/O took %.6f seconds\n", getTimeElapsed(start, end));
-
- // Видалення файлу
     if (remove(destFileName) == -1) 
         perror("Error deleting file");
 
-    gettimeofday(&start, NULL);
     cpyByMmap(fileName, destFileName, fileSize);
-    gettimeofday(&end, NULL);
-    printf("Copying file with mmap took %.6f seconds\n", getTimeElapsed(start, end));
-
- // Видалення файлу
     if (remove(destFileName) == -1) 
         perror("Error deleting file");
     
@@ -90,38 +58,119 @@ int main(int argc, char** argv)
 }
 
 
-void crfLowLevFunIO(char* fileName, size_t fileSize)
+int crfLowLevFunIO(char* fileName, size_t fileSize)
 {
-    int fd = open(fileName, O_WRONLY | O_CREAT | O_TRUNC);
-    if (fd == -1) {
+    char buffer[4096];
+    size_t bufSize = sizeof(buffer);
+    struct timeval start, end;
+    gettimeofday(&start, NULL);
+
+    int fd;
+    if ((fd = open(fileName, O_WRONLY | O_CREAT | O_TRUNC)) == -1) {
+        perror("Error opening file");
+        return 1;
+    }
+
+    for (size_t i = 0; i < fileSize; i += bufSize)
+        write(fd, buffer, bufSize);
+    gettimeofday(&end, NULL);
+
+    printf("Creating file with low-level I/O took %.6f seconds\n", getTimeElapsed(start, end));
+    close(fd);
+    return 0;
+}
+
+int crfDefFunIO(char* fileName, size_t fileSize)
+{
+    char buffer[4096];
+    size_t bufSize = sizeof(buffer);
+    struct timeval start, end;
+    gettimeofday(&start, NULL);
+
+    FILE* file;
+    if ((file = fopen(fileName, "w")) == NULL) {
         perror("Error opening file");
         exit(EXIT_FAILURE);
+    }
+    for (size_t i = 0; i < fileSize; i += bufSize)
+        fwrite(buffer, 1, bufSize, file);
+
+    // fseek(file, fileSize - 1, SEEK_SET);
+    // fputc('\0', file);
+
+    gettimeofday(&end, NULL);
+    printf("Creating file with standard file I/O took %.6f seconds\n", getTimeElapsed(start, end));
+    fclose(file);
+    return 0;
+}
+int crfByMmap(char* fileName, size_t fileSize)
+{
+    struct timeval start, end;
+    gettimeofday(&start, NULL);
+
+    int fd;
+
+    if((fd = open(fileName, O_RDWR | O_CREAT | O_TRUNC)) == -1){
+        perror("Error opening file");
+        return 1;
     }
 
     if (ftruncate(fd, fileSize) == -1) {
         perror("Error resizing file");
         close(fd);
-        exit(EXIT_FAILURE);
+        return 1;
     }
 
+    void * addr;
+    if((addr = mmap(0, fileSize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0)) == MAP_FAILED) {
+        perror("Error mapping file");
+        close(fd);
+        return 1;
+    }
+    for (size_t i = 0; i < fileSize; i++)
+        addr[i] = '1';
+
+
+    gettimeofday(&end, NULL);
+    printf("Creating file with mmap took %.6f seconds\n", getTimeElapsed(start, end));
+
+    if (munmap(addr, fileSize) == -1) {
+        perror("Error unmapping file");
+    }
     close(fd);
 }
 
-void crfDefFunIO(char* fileName, size_t fileSize)
+int cpyfLowLevFunIO(char* fileName, size_t fileSize)
 {
-    FILE* file = fopen(fileName, "wb");
-    if (file == NULL) {
-        perror("Error opening file");
-        exit(EXIT_FAILURE);
-    }
+    struct timeval start, end;
+    gettimeofday(&start, NULL);
 
-    fseek(file, fileSize - 1, SEEK_SET);
-    fputc('\0', file);
 
-    fclose(file);
+
+    gettimeofday(&end, NULL);
+    printf("Copying file with low-level I/O took %.6f seconds\n", getTimeElapsed(start, end));
+    return 0;
 }
-void crfByMmap(char* fileName, size_t fileSize);
+int cpyDefFunIO(char* fileName, size_t fileSize)
+{
+    struct timeval start, end;
+    gettimeofday(&start, NULL);
 
-void cpyfLowLevFunIO(char* fileName, size_t fileSize);
-void cpyDefFunIO(char* fileName, size_t fileSize);
-void cpyByMmap(char* fileName, size_t fileSize);
+
+
+
+    gettimeofday(&end, NULL);
+    printf("Copying file with standard file I/O took %.6f seconds\n", getTimeElapsed(start, end));
+    return 0;
+}
+int cpyByMmap(char* fileName, size_t fileSize)
+{
+    struct timeval start, end;
+    gettimeofday(&start, NULL);
+
+
+
+    gettimeofday(&end, NULL);
+    printf("Copying file with mmap took %.6f seconds\n", getTimeElapsed(start, end));
+    return 0;
+}
