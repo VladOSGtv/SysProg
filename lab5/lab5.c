@@ -11,9 +11,9 @@ int crfLowLevFunIO(char* fileName, size_t fileSize);
 int crfDefFunIO(char* fileName, size_t fileSize);
 int crfByMmap(char* fileName, size_t fileSize);
 
-int cpyfLowLevFunIO(char* fileName, size_t fileSize);
-int cpyDefFunIO(char* fileName, size_t fileSize);
-int cpyByMmap(char* fileName, size_t fileSize);
+int cpyfLowLevFunIO(char* fileName, char* destFileName);
+int cpyDefFunIO(char* fileName, char* destFileName);
+int cpyByMmap(char* fileName, char* destFileName);
 
 int main(int argc, char** argv)
 {
@@ -36,21 +36,22 @@ int main(int argc, char** argv)
         perror("Error deleting file");
         
     crfByMmap(fileName, fileSize);
-
+    // if (remove(fileName) == -1) 
+    //     perror("Error deleting file");
 
     // Копіювання файлу
-    char destFileName[256];
-    snprintf(destFileName, sizeof(destFileName), "%s_copy", fileName);
+    char* destFileName = argv[3];
+    //snprintf(destFileName, sizeof(destFileName), "%s_copy", fileName);
 
-    cpyfLowLevFunIO(fileName, destFileName, fileSize);
+    cpyfLowLevFunIO(fileName, destFileName);
     if (remove(destFileName) == -1) 
         perror("Error deleting file");
 
-    cpyDefFunIO(fileName, destFileName, fileSize);
+    cpyDefFunIO(fileName, destFileName);
     if (remove(destFileName) == -1) 
         perror("Error deleting file");
 
-    cpyByMmap(fileName, destFileName, fileSize);
+    cpyByMmap(fileName, destFileName);
     if (remove(destFileName) == -1) 
         perror("Error deleting file");
     
@@ -140,37 +141,149 @@ int crfByMmap(char* fileName, size_t fileSize)
     close(fd);
 }
 
-int cpyfLowLevFunIO(char* fileName, size_t fileSize)
+int cpyfLowLevFunIO(char* fileName, char* destFileName)
 {
     struct timeval start, end;
     gettimeofday(&start, NULL);
 
+    int fileRd;
+    if ((fileRd = open(fileName, O_RDONLY)) == -1) {
+        perror("Error opening file");
+        return 1;
+    }
+    int fileWr;
+    if ((fileWr = open(fileName, O_WRONLY | O_CREAT | O_TRUNC)) == -1) {
+        perror("Error opening file");
+        return 1;
+    }
 
+    char buffer[4096];
+    ssize_t bytesRead, bytesWritten, bufSize = sizeof(buffer);
+
+    while(bytesRead = read(fileRd, buffer, bufsize) > 0){
+        bytesWritten = write(fileWr, buffer, bytesRead);
+         if (bytesWritten != bytesRead) {
+            perror("Error writing to destination file");
+            close(fileRd);
+            close(fileWr);
+            return 1;
+        }
+    }
 
     gettimeofday(&end, NULL);
+
+    if (bytesRead == -1) {
+        perror("Error reading from source file");
+        close(src_fd);
+        close(dest_fd);
+        return 1;
+    }
+
     printf("Copying file with low-level I/O took %.6f seconds\n", getTimeElapsed(start, end));
+    close(fileRd);
+    close(fileWr);
     return 0;
 }
-int cpyDefFunIO(char* fileName, size_t fileSize)
+int cpyDefFunIO(char* fileName, char* destFileName)
 {
     struct timeval start, end;
     gettimeofday(&start, NULL);
 
+    FILE* fileRd;
+    if ((fileRd = fopen(fileName, "r")) == -1) {
+        perror("Error opening file");
+        return 1;
+    }
+    FILE* fileWr;
+    if ((fileWr = fopen(fileName, "w")) == -1) {
+        perror("Error opening file");
+        return 1;
+    }
 
+    char buffer[4096];
+    ssize_t bytesRead, bytesWritten, bufSize = sizeof(buffer);
 
+    while(bytesRead = fread(buffer, 1, bufsize, fileRd) > 0){
+        bytesWritten = fwrite(buffer, 1, bytesRead, fileWr);
+        if (bytesWritten != bytesRead) {
+            perror("Error writing to destination file");
+            close(fileRd);
+            close(fileWr);
+            return 1;
+        }
+    }
 
     gettimeofday(&end, NULL);
+
+    if (bytesRead == -1) {
+        perror("Error reading from source file");
+        close(src_fd);
+        close(dest_fd);
+        return 1;
+    }
+
     printf("Copying file with standard file I/O took %.6f seconds\n", getTimeElapsed(start, end));
     return 0;
 }
-int cpyByMmap(char* fileName, size_t fileSize)
+int cpyByMmap(char* fileName, char* destFileName)
 {
     struct timeval start, end;
     gettimeofday(&start, NULL);
 
+    int fileRd;
+    if ((fileRd = open(fileName, O_RDONLY)) == -1) {
+        perror("Error opening file");
+        return 1;
+    }
+    int fileWr;
+    if ((fileWr = open(fileName, O_WRONLY | O_CREAT | O_TRUNC)) == -1) {
+        perror("Error opening file");
+        return 1;
+    }
 
+    size_t fileSize = fseek(fileRd, 0, SEEK_END);
+    if (ftruncate(fileWr, fileSize) == -1) {
+        perror("Error resizing destination file");
+        close(src_fd);
+        close(dest_fd);
+        return 1;    
+    }
 
+    void * addrRd;
+    if((addrRd = mmap(0, fileSize, PROT_READ, fileRd, 0)) == MAP_FAILED) {
+        perror("Error mapping file");
+        close(fileRd);
+        close(fileWr);
+        return 1;
+    }    
+    void * addrWr;
+    if((addrWr = mmap(0, fileSize, PROT_WRITE, MAP_SHARED, fileWr, 0)) == MAP_FAILED) {
+        perror("Error mapping file");
+        munmap(addrRd, fileSize)
+        close(fileRd);
+        close(fileWr);
+        return 1;
+    } 
+
+    memcpy(addrWr, addrRd fileSize);
     gettimeofday(&end, NULL);
+
+
+    if (munmap(addrRd, fileSize) == -1){
+        perror("Error unmapping rd file");
+        close(fileRd);
+        close(fileWr);
+        return 1;
+    }
+    if (munmap(addrWr, fileSize) == -1){
+        perror("Error unmapping wr file");
+        close(fileRd);
+        close(fileWr);  
+        return 1;
+    }
+
+    close(fileRd);
+    close(fileWr);
     printf("Copying file with mmap took %.6f seconds\n", getTimeElapsed(start, end));
     return 0;
 }
