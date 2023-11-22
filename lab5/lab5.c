@@ -15,8 +15,11 @@ int cpyfLowLevFunIO(char* fileName, char* destFileName);
 int cpyDefFunIO(char* fileName, char* destFileName);
 int cpyByMmap(char* fileName, char* destFileName);
 
+<<<<<<< HEAD
 double getTimeElapsed(struct timeval start, struct timeval end);
 
+=======
+>>>>>>> 7c870464e8e63066cd00e17f470299532dc27eb7
 int main(int argc, char** argv)
 {
     if (argc != 3) {
@@ -69,7 +72,11 @@ int crfLowLevFunIO(char* fileName, size_t fileSize)
     gettimeofday(&start, NULL);
 
     int fd;
+<<<<<<< HEAD
     if ((fd = open(fileName, O_WRONLY | O_CREAT | O_TRUNC, 0644)) == -1) {
+=======
+    if ((fd = open(fileName, O_WRONLY | O_CREAT | O_TRUNC)) == -1) {
+>>>>>>> 7c870464e8e63066cd00e17f470299532dc27eb7
         perror("Error opening file");
         return 1;
     }
@@ -124,8 +131,13 @@ int crfByMmap(char* fileName, size_t fileSize)
         return 1;
     }
 
+<<<<<<< HEAD
     unsigned char * addr;
     if((addr = (unsigned char*) mmap(0, fileSize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0)) == MAP_FAILED) {
+=======
+    void * addr;
+    if((addr = mmap(0, fileSize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0)) == MAP_FAILED) {
+>>>>>>> 7c870464e8e63066cd00e17f470299532dc27eb7
         perror("Error mapping file");
         close(fd);
         return 1;
@@ -162,7 +174,11 @@ int cpyfLowLevFunIO(char* fileName, char* destFileName)
     char buffer[4096];
     ssize_t bytesRead, bytesWritten, bufSize = sizeof(buffer);
 
+<<<<<<< HEAD
     while(bytesRead = read(fileRd, buffer, bufSize) > 0){
+=======
+    while(bytesRead = read(fileRd, buffer, bufsize) > 0){
+>>>>>>> 7c870464e8e63066cd00e17f470299532dc27eb7
         bytesWritten = write(fileWr, buffer, bytesRead);
          if (bytesWritten != bytesRead) {
             perror("Error writing to destination file");
@@ -176,8 +192,13 @@ int cpyfLowLevFunIO(char* fileName, char* destFileName)
 
     if (bytesRead == -1) {
         perror("Error reading from source file");
+<<<<<<< HEAD
         close(fileRd);
         close(fileWr);
+=======
+        close(src_fd);
+        close(dest_fd);
+>>>>>>> 7c870464e8e63066cd00e17f470299532dc27eb7
         return 1;
     }
 
@@ -205,7 +226,11 @@ int cpyDefFunIO(char* fileName, char* destFileName)
     char buffer[4096];
     ssize_t bytesRead, bytesWritten, bufSize = sizeof(buffer);
 
+<<<<<<< HEAD
     while(bytesRead = fread(buffer, 1, bufSize, fileRd) > 0){
+=======
+    while(bytesRead = fread(buffer, 1, bufsize, fileRd) > 0){
+>>>>>>> 7c870464e8e63066cd00e17f470299532dc27eb7
         bytesWritten = fwrite(buffer, 1, bytesRead, fileWr);
         if (bytesWritten != bytesRead) {
             perror("Error writing to destination file");
@@ -219,8 +244,13 @@ int cpyDefFunIO(char* fileName, char* destFileName)
 
     if (bytesRead == -1) {
         perror("Error reading from source file");
+<<<<<<< HEAD
         close(fileRd);
         close(fileWr);
+=======
+        close(src_fd);
+        close(dest_fd);
+>>>>>>> 7c870464e8e63066cd00e17f470299532dc27eb7
         return 1;
     }
 
@@ -246,13 +276,22 @@ int cpyByMmap(char* fileName, char* destFileName)
     size_t fileSize = fseek(fileRd, 0, SEEK_END);
     if (ftruncate(fileWr, fileSize) == -1) {
         perror("Error resizing destination file");
+<<<<<<< HEAD
         close(fileRd);
         close(fileWr);
+=======
+        close(src_fd);
+        close(dest_fd);
+>>>>>>> 7c870464e8e63066cd00e17f470299532dc27eb7
         return 1;    
     }
 
     void * addrRd;
+<<<<<<< HEAD
     if((addrRd = mmap(0, fileSize, PROT_READ,MAP_SHARED, fileRd, 0)) == MAP_FAILED) {
+=======
+    if((addrRd = mmap(0, fileSize, PROT_READ, fileRd, 0)) == MAP_FAILED) {
+>>>>>>> 7c870464e8e63066cd00e17f470299532dc27eb7
         perror("Error mapping file");
         close(fileRd);
         close(fileWr);
@@ -261,13 +300,21 @@ int cpyByMmap(char* fileName, char* destFileName)
     void * addrWr;
     if((addrWr = mmap(0, fileSize, PROT_WRITE, MAP_SHARED, fileWr, 0)) == MAP_FAILED) {
         perror("Error mapping file");
+<<<<<<< HEAD
         munmap(addrRd, fileSize);
+=======
+        munmap(addrRd, fileSize)
+>>>>>>> 7c870464e8e63066cd00e17f470299532dc27eb7
         close(fileRd);
         close(fileWr);
         return 1;
     } 
 
+<<<<<<< HEAD
     memcpy(addrWr, addrRd, fileSize);
+=======
+    memcpy(addrWr, addrRd fileSize);
+>>>>>>> 7c870464e8e63066cd00e17f470299532dc27eb7
     gettimeofday(&end, NULL);
 
 
@@ -289,5 +336,8 @@ int cpyByMmap(char* fileName, char* destFileName)
     printf("Copying file with mmap took %.6f seconds\n", getTimeElapsed(start, end));
     return 0;
 }
+<<<<<<< HEAD
 
 double getTimeElapsed(struct timeval start, struct timeval end) {return end.tv_sec - start.tv_sec + (end.tv_usec - start.tv_usec) / 1000000;}
+=======
+>>>>>>> 7c870464e8e63066cd00e17f470299532dc27eb7
