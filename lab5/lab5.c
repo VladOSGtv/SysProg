@@ -56,7 +56,8 @@ int main(int argc, char** argv)
     cpyByMmap(fileName, destFileName);
     if (remove(destFileName) == -1) 
         perror("Error deleting file");
-    
+    if (remove(fileName) == -1) 
+        perror("Error deleting file");
     return 0;
 }
 
@@ -68,8 +69,10 @@ int crfLowLevFunIO(char* fileName, size_t fileSize)
     struct timeval start, end;
     gettimeofday(&start, NULL);
 
+    printf("bufSize = %d", bufSize);
+
     int fd;
-    if ((fd = open(fileName, O_WRONLY | O_CREAT | O_TRUNC, 0644)) == -1) {
+    if ((fd = open(fileName, O_WRONLY | O_CREAT, 0644)) == -1) {
         perror("Error opening file");
         return 1;
     }
@@ -78,7 +81,7 @@ int crfLowLevFunIO(char* fileName, size_t fileSize)
         write(fd, buffer, bufSize);
     gettimeofday(&end, NULL);
 
-    printf("Creating file with low-level I/O took %.6f seconds\n", getTimeElapsed(start, end));
+    printf("Creating file with low-level I/O took %.10f seconds\n", getTimeElapsed(start, end));
     close(fd);
     return 0;
 }
@@ -290,4 +293,4 @@ int cpyByMmap(char* fileName, char* destFileName)
     return 0;
 }
 
-double getTimeElapsed(struct timeval start, struct timeval end) {return end.tv_sec - start.tv_sec + (end.tv_usec - start.tv_usec) / 1000000;}
+double getTimeElapsed(struct timeval start, struct timeval end) {return (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_usec - start.tv_usec)/1000;}
