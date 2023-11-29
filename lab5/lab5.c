@@ -69,7 +69,6 @@ int crfLowLevFunIO(char* fileName, size_t fileSize)
     struct timeval start, end;
     gettimeofday(&start, NULL);
 
-    printf("bufSize = %d", bufSize);
 
     int fd;
     if ((fd = open(fileName, O_WRONLY | O_CREAT, 0644)) == -1) {
