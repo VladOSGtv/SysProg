@@ -20,7 +20,7 @@ double getTimeElapsed(struct timeval start, struct timeval end);
 int main(int argc, char** argv)
 {
     if (argc != 4) {
-        fprintf(stderr, "Usage: %s <mode> <filename> <file_size_in_gb> \n", argv[0]);
+        fprintf(stderr, "Usage: %s <filename> <file_size_in_gb> \n", argv[0]);
         return 1;
     }
 
@@ -97,6 +97,23 @@ int main(int argc, char** argv)
         printf("Невідома операція: %s\n", operation);
         return 1;
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
 //     char* fileName = argv[1];
 
 //     char* fileName_low;
