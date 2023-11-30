@@ -98,67 +98,6 @@ int main(int argc, char** argv)
         return 1;
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-//     char* fileName = argv[1];
-
-//     char* fileName_low;
-//     strcpy(fileName_low, fileName);
-//     strcat(fileName_low, "_low");
-//     char* fileName_def;
-//     strcpy(fileName_low, fileName);
-//     strcat(fileName_low, "_def");
-//     char* fileName_mmap;
-//     strcpy(fileName_low, fileName);
-//     strcat(fileName_low, "_mmap");
-
-//     size_t fileSize = atoi(argv[2]) * 1024 * 1024 * 1024;
-
-
-//   // Створення файлу
-//     crfLowLevFunIO(fileName_low, fileSize);
-//     if (remove(fileName_low) == -1) 
-//         perror("Error deleting file");
-
-//     crfDefFunIO(fileName_def, fileSize);
-//     if (remove(fileName_def) == -1) 
-//         perror("Error deleting file");
-        
-//     crfByMmap(fileName_mmap, fileSize);
-//     // if (remove(fileName_mmap) == -1) 
-//     //     perror("Error deleting file");
-
-//     // Копіювання файлу
-//     char* destFileName = argv[3];
-//     //snprintf(destFileName, sizeof(destFileName), "%s_copy", fileName);
-
-//     cpyfLowLevFunIO(fileName, destFileName);
-//     if (remove(destFileName) == -1) 
-//         perror("Error deleting file");
-
-//     cpyDefFunIO(fileName, destFileName);
-//     if (remove(destFileName) == -1) 
-//         perror("Error deleting file");
-
-//     cpyByMmap(fileName, destFileName);
-//     if (remove(destFileName) == -1) 
-//         perror("Error deleting file");
-//     if (remove(fileName) == -1) 
-//         perror("Error deleting file");
     return 0;
 }
 
@@ -216,7 +155,7 @@ int crfByMmap(char* fileName, size_t fileSize)
 
     int fd;
 
-    if((fd = open(fileName, O_RDWR | O_CREAT | O_TRUNC)) == -1){
+    if((fd = open(fileName, O_RDWR | O_CREAT, 0644)) == -1){
         perror("Error opening file");
         return 1;
     }
@@ -336,12 +275,12 @@ int cpyByMmap(char* fileName, char* destFileName)
     gettimeofday(&start, NULL);
 
     int fileRd;
-    if ((fileRd = open(fileName, O_RDONLY)) == -1) {
+    if ((fileRd = open(fileName, O_RDONLY, 0644)) == -1) {
         perror("Error opening file");
         return 1;
     }
     int fileWr;
-    if ((fileWr = open(fileName, O_WRONLY | O_CREAT | O_TRUNC)) == -1) {
+    if ((fileWr = open(fileName, O_WRONLY | O_CREAT, 0644)) == -1) {
         perror("Error opening file");
         return 1;
     }
