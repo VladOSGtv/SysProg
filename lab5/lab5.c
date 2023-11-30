@@ -191,12 +191,12 @@ int cpyfLowLevFunIO(char* fileName, char* destFileName)
     gettimeofday(&start, NULL);
 
     int fileRd;
-    if ((fileRd = open(fileName, O_RDONLY)) == -1) {
+    if ((fileRd = open(fileName, O_RDONLY, 0644)) == -1) {
         perror("Error opening file");
         return 1;
     }
     int fileWr;
-    if ((fileWr = open(fileName, O_WRONLY | O_CREAT | O_TRUNC)) == -1) {
+    if ((fileWr = open(fileName, O_WRONLY | O_CREAT, 0644)) == -1) {
         perror("Error opening file");
         return 1;
     }
@@ -280,7 +280,7 @@ int cpyByMmap(char* fileName, char* destFileName)
         return 1;
     }
     int fileWr;
-    if ((fileWr = open(fileName, O_WRONLY | O_CREAT, 0644)) == -1) {
+    if ((fileWr = open(destFileName, O_WRONLY | O_CREAT, 0644)) == -1) {
         perror("Error opening file");
         return 1;
     }
