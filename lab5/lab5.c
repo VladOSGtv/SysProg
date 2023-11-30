@@ -19,45 +19,129 @@ double getTimeElapsed(struct timeval start, struct timeval end);
 
 int main(int argc, char** argv)
 {
-    if (argc != 3) {
-        fprintf(stderr, "Usage: %s <filename> <file_size_in_gb>\n", argv[0]);
+    if (argc != 4) {
+        fprintf(stderr, "Usage: %s <mode> <filename> <file_size_in_gb> \n", argv[0]);
         return 1;
     }
 
-    char* fileName = argv[1];
-    size_t fileSize = atoi(argv[2]) * 1024 * 1024 * 1024;
+    const char *operation = argv[1];
+
+    if (strcmp(operation, "create_lowlevel") == 0)
+    {
+        if (argc != 4)
+        {
+            printf("Потрібно вказати ім'я файлу та розмір для операції 'create_lowlevel'.\n");
+            return 1;
+        }
+        const char *filename = argv[2];
+        off_t file_size = atoll(argv[3]);
+        crfLowLevFunIO(filename, file_size);
+    }
+    else if (strcmp(operation, "create_standard") == 0)
+    {
+        if (argc != 4)
+        {
+            printf("Потрібно вказати ім'я файлу та розмір для операції 'create_standard'.\n");
+            return 1;
+        }
+        const char *filename = argv[2];
+        off_t file_size = atoll(argv[3]);
+        crfDefFunIO(filename, file_size);
+    }
+    else if (strcmp(operation, "create_mmap") == 0)
+    {
+        if (argc != 4)
+        {
+            printf("Потрібно вказати ім'я файлу та розмір для операції 'create_mmap'.\n");
+            return 1;
+        }
+        const char *filename = argv[2];
+        off_t file_size = atoll(argv[3]);
+        crfByMmap(filename, file_size);
+    }
+    else if (strcmp(operation, "copy_lowlevel") == 0)
+    {
+        if (argc != 4)
+        {
+            printf("Потрібно вказати ім'я вихідного та нового файлів для операції 'copy_lowlevel'.\n");
+            return 1;
+        }
+        const char *source_filename = argv[2];
+        const char *dest_filename = argv[3];
+        cpyfLowLevFunIO(source_filename, dest_filename);
+    }
+    else if (strcmp(operation, "copy_standard") == 0)
+    {
+        if (argc != 4)
+        {
+            printf("Потрібно вказати ім'я вихідного та нового файлів для операції 'copy_standard'.\n");
+            return 1;
+        }
+        const char *source_filename = argv[2];
+        const char *dest_filename = argv[3];
+        cpyDefFunIO(source_filename, dest_filename);
+    }
+    else if (strcmp(operation, "copy_mmap") == 0)
+    {
+        if (argc != 4)
+        {
+            printf("Потрібно вказати ім'я вихідного та нового файлів для операції 'copy_mmap'.\n");
+            return 1;
+        }
+        const char *source_filename = argv[2];
+        const char *dest_filename = argv[3];
+        cpyByMmap(source_filename, dest_filename);
+    }
+    else
+    {
+        printf("Невідома операція: %s\n", operation);
+        return 1;
+    }
+//     char* fileName = argv[1];
+
+//     char* fileName_low;
+//     strcpy(fileName_low, fileName);
+//     strcat(fileName_low, "_low");
+//     char* fileName_def;
+//     strcpy(fileName_low, fileName);
+//     strcat(fileName_low, "_def");
+//     char* fileName_mmap;
+//     strcpy(fileName_low, fileName);
+//     strcat(fileName_low, "_mmap");
+
+//     size_t fileSize = atoi(argv[2]) * 1024 * 1024 * 1024;
 
 
-  // Створення файлу
-    crfLowLevFunIO(fileName, fileSize);
-    if (remove(fileName) == -1) 
-        perror("Error deleting file");
+//   // Створення файлу
+//     crfLowLevFunIO(fileName_low, fileSize);
+//     if (remove(fileName_low) == -1) 
+//         perror("Error deleting file");
 
-    crfDefFunIO(fileName, fileSize);
-    if (remove(fileName) == -1) 
-        perror("Error deleting file");
+//     crfDefFunIO(fileName_def, fileSize);
+//     if (remove(fileName_def) == -1) 
+//         perror("Error deleting file");
         
-    crfByMmap(fileName, fileSize);
-    // if (remove(fileName) == -1) 
-    //     perror("Error deleting file");
+//     crfByMmap(fileName_mmap, fileSize);
+//     // if (remove(fileName_mmap) == -1) 
+//     //     perror("Error deleting file");
 
-    // Копіювання файлу
-    char* destFileName = argv[3];
-    //snprintf(destFileName, sizeof(destFileName), "%s_copy", fileName);
+//     // Копіювання файлу
+//     char* destFileName = argv[3];
+//     //snprintf(destFileName, sizeof(destFileName), "%s_copy", fileName);
 
-    cpyfLowLevFunIO(fileName, destFileName);
-    if (remove(destFileName) == -1) 
-        perror("Error deleting file");
+//     cpyfLowLevFunIO(fileName, destFileName);
+//     if (remove(destFileName) == -1) 
+//         perror("Error deleting file");
 
-    cpyDefFunIO(fileName, destFileName);
-    if (remove(destFileName) == -1) 
-        perror("Error deleting file");
+//     cpyDefFunIO(fileName, destFileName);
+//     if (remove(destFileName) == -1) 
+//         perror("Error deleting file");
 
-    cpyByMmap(fileName, destFileName);
-    if (remove(destFileName) == -1) 
-        perror("Error deleting file");
-    if (remove(fileName) == -1) 
-        perror("Error deleting file");
+//     cpyByMmap(fileName, destFileName);
+//     if (remove(destFileName) == -1) 
+//         perror("Error deleting file");
+//     if (remove(fileName) == -1) 
+//         perror("Error deleting file");
     return 0;
 }
 
