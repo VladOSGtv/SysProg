@@ -120,7 +120,7 @@ int crfLowLevFunIO(char* fileName, size_t fileSize)
         write(fd, buffer, bufSize);
     gettimeofday(&end, NULL);
 
-    printf("Creating file with low-level I/O took %.10f seconds\n", getTimeElapsed(start, end));
+    printf("\tCreating file with low-level I/O took %.10f seconds\n", getTimeElapsed(start, end));
     close(fd);
     return 0;
 }
@@ -144,7 +144,7 @@ int crfDefFunIO(char* fileName, size_t fileSize)
     // fputc('\0', file);
 
     gettimeofday(&end, NULL);
-    printf("Creating file with standard file I/O took %.6f seconds\n", getTimeElapsed(start, end));
+    printf("\tCreating file with standard file I/O took %.6f seconds\n", getTimeElapsed(start, end));
     fclose(file);
     return 0;
 }
@@ -177,7 +177,7 @@ int crfByMmap(char* fileName, size_t fileSize)
 
 
     gettimeofday(&end, NULL);
-    printf("Creating file with mmap took %.6f seconds\n", getTimeElapsed(start, end));
+    printf("\tCreating file with mmap took %.6f seconds\n", getTimeElapsed(start, end));
 
     if (munmap(addr, fileSize) == -1) {
         perror("Error unmapping file");
@@ -191,7 +191,7 @@ int cpyfLowLevFunIO(char* fileName, char* destFileName)
     gettimeofday(&start, NULL);
 
     int fileRd;
-    if ((fileRd = open(fileName, O_RDONLY, 0644)) == -1) {
+    if ((fileRd = open(fileName, O_RDONLY | O_CREAT, 0644)) == -1) {
         perror("Error opening file");
         return 1;
     }
@@ -223,7 +223,7 @@ int cpyfLowLevFunIO(char* fileName, char* destFileName)
         return 1;
     }
 
-    printf("Copying file with low-level I/O took %.6f seconds\n", getTimeElapsed(start, end));
+    printf("\tCopying file with low-level I/O took %.6f seconds\n", getTimeElapsed(start, end));
     close(fileRd);
     close(fileWr);
     return 0;
@@ -266,7 +266,7 @@ int cpyDefFunIO(char* fileName, char* destFileName)
         return 1;
     }
 
-    printf("Copying file with standard file I/O took %.6f seconds\n", getTimeElapsed(start, end));
+    printf("\tCopying file with standard file I/O took %.6f seconds\n", getTimeElapsed(start, end));
     return 0;
 }
 int cpyByMmap(char* fileName, char* destFileName)
@@ -294,14 +294,14 @@ int cpyByMmap(char* fileName, char* destFileName)
     }
 
     void * addrRd;
-    if((addrRd = mmap(0, fileSize, PROT_READ,MAP_SHARED, fileRd, 0)) == MAP_FAILED) {
+    if((addrRd = mmap(NULL, fileSize, PROT_READ,MAP_PRIVATE, fileRd, 0)) == MAP_FAILED) {
         perror("Error mapping file");
         close(fileRd);
         close(fileWr);
         return 1;
     }    
     void * addrWr;
-    if((addrWr = mmap(0, fileSize, PROT_WRITE, MAP_SHARED, fileWr, 0)) == MAP_FAILED) {
+    if((addrWr = mmap(NULL, fileSize, PROT_WRITE, MAP_SHARED, fileWr, 0)) == MAP_FAILED) {
         perror("Error mapping file");
         munmap(addrRd, fileSize);
         close(fileRd);
@@ -328,8 +328,8 @@ int cpyByMmap(char* fileName, char* destFileName)
 
     close(fileRd);
     close(fileWr);
-    printf("Copying file with mmap took %.6f seconds\n", getTimeElapsed(start, end));
+    printf("\tCopying file with mmap took %.6f seconds\n", getTimeElapsed(start, end));
     return 0;
 }
 
-double getTimeElapsed(struct timeval start, struct timeval end) {return (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_usec - start.tv_usec)/1000;}
+double getTimeElapsed(struct timeval start, struct timeval end) {return (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_usec - start.tv_usec)/1000000;}
