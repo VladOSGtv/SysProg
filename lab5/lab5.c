@@ -280,7 +280,7 @@ int cpyByMmap(char* fileName, char* destFileName)
         return 1;
     }
     int fileWr;
-    if ((fileWr = open(fileName, O_WRONLY | O_CREAT, 0644)) == -1) {
+    if ((fileWr = open(destFileName, O_WRONLY | O_CREAT, 0644)) == -1) {
         perror("Error opening file");
         return 1;
     }
